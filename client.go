@@ -15,6 +15,7 @@ type Client struct {
 const (
 	pathCreateInvoice      = "/v2/invoice/create"
 	pathCancelInvoice      = "/v2/invoice/merchant/canceled"
+	pathGetInvoiceInfo     = "/v2/invoice/merchant/info"
 	pathGetInvoices        = "/v2/invoice/merchant/list"
 	pathGetBalance         = "/v2/merchant/wallet/balance/all"
 	pathGetStatistics      = "/v2/invoice/merchant/statistics"
@@ -40,7 +41,7 @@ func sendRequest[P, R any, E error](r *resty.Request, method, path string, paylo
 		SetResult(result).
 		Execute(method, path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to execute request: %w", err)
+		return nil, fmt.Errorf("request %s %s failed: %w", method, path, err)
 	}
 
 	switch result.Status {
@@ -88,9 +89,7 @@ func (c *Client) GetInvoices(ctx context.Context, params *GetInvoicesParams) (*[
 
 	switch result.Status {
 	case ResponseStatusSuccess:
-		var res *[]*Invoice
-
-		res, err = result.getResult()
+		res, err := result.getResult()
 
 		return res, result.AllCount, err
 	case ResponseStatusError:
@@ -104,7 +103,7 @@ func (c *Client) GetInvoiceInfo(ctx context.Context, invoiceID string) (*Invoice
 	return sendRequest[getInvoiceInfoRequest, Invoice, ValidateError](
 		c.client.R().SetContext(ctx),
 		http.MethodPost,
-		pathCreateInvoice,
+		pathGetInvoiceInfo,
 		getInvoiceInfoRequest{
 			UUID: invoiceID,
 		},
@@ -132,7 +131,7 @@ func (c *Client) GetStatistics(ctx context.Context, start, end Date) (*Statistic
 	)
 }
 
-func (c *Client) GreateStaticWallet(ctx context.Context, shopID, currency, orderID string) (*Wallet, error) {
+func (c *Client) CreateStaticWallet(ctx context.Context, shopID, currency, orderID string) (*Wallet, error) {
 	return sendRequest[CreateStaticWalletRequest, Wallet, ValidateError](
 		c.client.R().SetContext(ctx),
 		http.MethodPost,

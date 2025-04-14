@@ -6,7 +6,7 @@ import (
 )
 
 type response[R any, E error] struct {
-	*DetailError
+	DetailError
 	Status   ResponseStatus  `json:"status"`
 	Result   json.RawMessage `json:"result"`
 	AllCount int             `json:"all_count,omitempty"`
